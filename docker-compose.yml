@@ -1,0 +1,46 @@
+services:
+  # For local development only — in production, use Neon (external PostgreSQL)
+  postgres:
+    image: postgres:16-alpine
+    container_name: gmail-monitor-db
+    environment:
+      POSTGRES_DB: gmail_monitor
+      POSTGRES_USER: gmail_monitor
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gmail_monitor -d gmail_monitor"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Gmail Monitor Service (local dev mode)
+  app:
+    build: .
+    container_name: gmail-monitor-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: development
+      APP_TIMEZONE: Asia/Riyadh
+      # Local dev uses the local postgres container
+      DATABASE_URL: postgres://gmail_monitor:changeme@postgres:5432/gmail_monitor?sslmode=disable
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      GMAIL_CLIENT_ID: ${GMAIL_CLIENT_ID}
+      GMAIL_CLIENT_SECRET: ${GMAIL_CLIENT_SECRET}
+      POLL_INTERVAL: 60s
+      NOTIFICATION_POLL_INTERVAL: 5s
+      LOG_LEVEL: debug
+      HTTP_PORT: 8080
+      HTTP_API_KEY: ${HTTP_API_KEY}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
