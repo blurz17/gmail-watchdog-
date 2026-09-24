@@ -52,9 +52,19 @@ func NewServer(
 }
 
 func (s *Server) registerRoutes() {
+	s.mux.HandleFunc("GET /{$}", s.handleRoot)
 	s.mux.HandleFunc("GET /health", s.handleHealth)
 	s.mux.HandleFunc("GET /ready", s.handleReady)
 	s.mux.HandleFunc("GET /status", s.handleStatus)
+}
+
+func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
+	s.writeJSON(w, http.StatusOK, map[string]string{
+		"service": "Gmail Watchdog",
+		"health":  "/health",
+		"ready":   "/ready",
+		"status":  "/status (requires auth)",
+	})
 }
 
 // Start starts the HTTP server in the background.
