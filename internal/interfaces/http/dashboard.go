@@ -117,11 +117,11 @@ func (d *Dashboard) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl := template.Must(template.New("dashboard").Funcs(template.FuncMap{
-		"statusEmoji": func(status string) string {
+		"statusEmoji": func(status entities.AccountStatus) string {
 			switch status {
-			case "active":
+			case entities.AccountStatusActive:
 				return "🟢"
-			case "auth_error":
+			case entities.AccountStatusAuthError:
 				return "🔴"
 			default:
 				return "⏸️"
