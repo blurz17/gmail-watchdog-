@@ -106,7 +106,7 @@ func Load() (*Config, error) {
 			ChatID:   requireEnv("TELEGRAM_CHAT_ID"),
 		},
 		HTTP: HTTPConfig{
-			Port:   getEnv("HTTP_PORT", "8080"),
+			Port:   getEnv("PORT", getEnv("HTTP_PORT", "8080")),
 			APIKey: getEnv("HTTP_API_KEY", ""),
 		},
 		Monitor: MonitorConfig{
