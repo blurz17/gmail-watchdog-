@@ -51,6 +51,11 @@ func NewServer(
 	return s
 }
 
+// Mux returns the underlying ServeMux for registering additional routes.
+func (s *Server) Mux() *http.ServeMux {
+	return s.mux
+}
+
 func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("GET /{$}", s.handleRoot)
 	s.mux.HandleFunc("GET /health", s.handleHealth)
@@ -59,12 +64,7 @@ func (s *Server) registerRoutes() {
 }
 
 func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
-	s.writeJSON(w, http.StatusOK, map[string]string{
-		"service": "Gmail Watchdog",
-		"health":  "/health",
-		"ready":   "/ready",
-		"status":  "/status (requires auth)",
-	})
+	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 
 // Start starts the HTTP server in the background.

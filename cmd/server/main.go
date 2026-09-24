@@ -120,6 +120,15 @@ func run(logger *slog.Logger) error {
 	httpServer := httpapi.NewServer(
 		cfg.HTTP.Port, db, statusUC, cfg.HTTP.APIKey, logger,
 	)
+
+	// ── Dashboard (Web UI) ─────────────────────────────────────
+	dashboard := httpapi.NewDashboard(
+		accountRepo, providerRepo, senderRuleRepo,
+		cfg.Gmail.ClientID, cfg.Gmail.ClientSecret,
+		cfg.HTTP.APIKey, logger,
+	)
+	dashboard.RegisterRoutes(httpServer.Mux())
+
 	httpServer.Start()
 
 	// ── Telegram Bot ───────────────────────────────────────────
