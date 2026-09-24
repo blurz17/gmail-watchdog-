@@ -1,1 +1,1 @@
-web: ./gmail-monitor
+web: bin/server
