@@ -4,6 +4,7 @@ A production-grade Gmail monitoring and notification service built in Go. Watche
 
 ## Features
 
+- **Web Dashboard** — Manage accounts, providers, and rules from a beautiful dark-themed UI
 - **Multi-Account** — Monitor multiple Gmail accounts simultaneously
 - **Provider Rules** — Configure sender matching per provider (exact email or domain)
 - **Real-time Notifications** — Rich Telegram messages with email details + direct Gmail link
@@ -64,18 +65,10 @@ go run ./cmd/server
 
 ### 3. Add Gmail Accounts & Providers
 
-```bash
-# Authorize a Gmail account (opens browser)
-go run ./cmd/cli auth account1@gmail.com
-
-# Add providers with sender rules
-go run ./cmd/cli add-provider Heroku support@heroku.com
-go run ./cmd/cli add-provider Mostaql info@mostaql.com
-
-# Verify
-go run ./cmd/cli list-accounts
-go run ./cmd/cli list-providers
-```
+1. Open your browser to `http://localhost:8080/dashboard`
+2. Log in using your `HTTP_API_KEY`
+3. Click **+ Connect Gmail Account** to link your emails via OAuth
+4. Add providers and sender rules directly from the UI!
 
 ## Google OAuth Setup
 
