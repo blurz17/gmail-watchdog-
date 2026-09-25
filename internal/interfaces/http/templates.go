@@ -34,17 +34,19 @@ const dashboardHTML = `<!DOCTYPE html>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+body{font-family:'Inter',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex}
 
-/* Nav */
-.nav{background:#1e293b;border-bottom:1px solid #334155;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between}
-.nav h1{font-size:1.2rem;font-weight:700}
-.nav h1 span{margin-right:.5rem}
-.nav-links a{color:#94a3b8;text-decoration:none;font-size:.85rem;margin-left:1rem}
-.nav-links a:hover{color:#e2e8f0}
+/* Sidebar */
+.sidebar{width:220px;background:#1e293b;border-right:1px solid #334155;padding:1.25rem 0;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:10}
+.sidebar-brand{padding:0 1.25rem 1.25rem;border-bottom:1px solid #334155;display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:1rem}
+.sidebar-brand span{font-size:1.4rem}
+.sidebar-nav{padding:1rem 0;flex:1}
+.sidebar-nav a{display:flex;align-items:center;gap:.6rem;padding:.6rem 1.25rem;color:#94a3b8;text-decoration:none;font-size:.85rem;transition:all .15s;border-left:3px solid transparent}
+.sidebar-nav a:hover{color:#e2e8f0;background:#0f172a40}
+.sidebar-nav a.active{color:#3b82f6;background:#3b82f620;border-left-color:#3b82f6;font-weight:600}
 
-/* Layout */
-.container{max-width:1000px;margin:2rem auto;padding:0 1.5rem}
+/* Main */
+.main{margin-left:220px;flex:1;padding:2rem;min-height:100vh}
 
 /* Flash */
 .flash{padding:.75rem 1rem;border-radius:.5rem;margin-bottom:1.5rem;font-size:.9rem;animation:fadeIn .3s}
@@ -52,10 +54,12 @@ body{font-family:'Inter',sans-serif;background:#0f172a;color:#e2e8f0;min-height:
 .flash.error{background:#7f1d1d20;border:1px solid #7f1d1d;color:#f87171}
 @keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 
-/* Cards */
+/* Section */
 .section{margin-bottom:2rem}
 .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
 .section-header h2{font-size:1.1rem;font-weight:600}
+
+/* Cards */
 .card{background:#1e293b;border:1px solid #334155;border-radius:.75rem;overflow:hidden}
 .card-body{padding:1.25rem}
 
@@ -66,17 +70,10 @@ td{padding:.75rem 1rem;border-bottom:1px solid #1e293b;font-size:.9rem;vertical-
 tr:last-child td{border-bottom:none}
 tr:hover{background:#1e293b80}
 
-/* Badges */
-.badge{display:inline-block;padding:.15rem .5rem;border-radius:.25rem;font-size:.75rem;font-weight:600}
-.badge-green{background:#065f4640;color:#34d399}
-.badge-red{background:#7f1d1d40;color:#f87171}
-.badge-gray{background:#33415540;color:#94a3b8}
-
 /* Forms */
 .form-row{display:flex;gap:.5rem;margin-top:1rem}
 .form-row input{flex:1;padding:.6rem .75rem;border-radius:.5rem;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:.9rem;outline:none}
 .form-row input:focus{border-color:#3b82f6}
-.form-row select{padding:.6rem .75rem;border-radius:.5rem;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:.9rem}
 
 /* Buttons */
 .btn{padding:.5rem 1rem;border-radius:.5rem;border:none;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:.35rem}
@@ -101,24 +98,28 @@ tr:hover{background:#1e293b80}
 .add-rule-form button{font-size:.75rem;padding:.3rem .6rem}
 
 /* Responsive */
-@media(max-width:640px){
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{margin-left:0}
   .form-row{flex-direction:column}
-  .nav{flex-direction:column;gap:.5rem}
   .section-header{flex-direction:column;gap:.5rem;align-items:flex-start}
 }
 </style>
 </head>
 <body>
 
-<div class="nav">
-  <h1><span>🐕</span> Gmail Watchdog</h1>
-  <div class="nav-links">
-    <a href="/health">Health</a>
-    <a href="/dashboard">Dashboard</a>
-  </div>
+<div class="sidebar">
+  <div class="sidebar-brand"><span>🐕</span> Gmail Watchdog</div>
+  <nav class="sidebar-nav">
+    <a href="/dashboard" class="active">📧 Accounts & Providers</a>
+    <a href="/dashboard/health">🏥 System Health</a>
+    <a href="/dashboard/analytics">📊 Analytics</a>
+    <a href="/dashboard/activity">📜 Activity Feed</a>
+    <a href="/dashboard/emails">📧 Email Browser</a>
+  </nav>
 </div>
 
-<div class="container">
+<div class="main">
 
 {{if .Flash}}
 <div class="flash {{.FlashType}}">{{.Flash}}</div>
