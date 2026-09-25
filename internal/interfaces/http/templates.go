@@ -116,6 +116,7 @@ tr:hover{background:#1e293b80}
     <a href="/dashboard/analytics">📊 Analytics</a>
     <a href="/dashboard/activity">📜 Activity Feed</a>
     <a href="/dashboard/emails">📧 Email Browser</a>
+    <a href="/dashboard/docs">📚 Documentation</a>
   </nav>
 </div>
 
