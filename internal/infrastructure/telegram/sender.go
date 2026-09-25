@@ -90,7 +90,7 @@ func (s *Sender) sendMessage(ctx context.Context, chatID string, text string) (s
 	}
 
 	if resp.StatusCode == http.StatusTooManyRequests {
-		return "", fmt.Errorf("telegram rate limited (429)")
+		return "", fmt.Errorf("telegram rate limited (429): %s", string(respBody))
 	}
 
 	if resp.StatusCode != http.StatusOK {
