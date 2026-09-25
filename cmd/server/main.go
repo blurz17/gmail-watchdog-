@@ -129,6 +129,14 @@ func run(logger *slog.Logger) error {
 	)
 	dashboard.RegisterRoutes(httpServer.Mux())
 
+	// ── Dashboard Pages (Health, Analytics, Activity, Emails) ──
+	eventRepo := postgres.NewSystemEventRepo(db)
+	pages := httpapi.NewPages(
+		db, accountRepo, providerRepo, emailMessageRepo,
+		notificationRepo, eventRepo, senderRuleRepo, logger,
+	)
+	pages.RegisterRoutes(httpServer.Mux(), dashboard.AuthMiddleware)
+
 	httpServer.Start()
 
 	// ── Telegram Bot ───────────────────────────────────────────

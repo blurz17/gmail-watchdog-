@@ -131,6 +131,17 @@ func (r *NotificationRepo) GetPendingCount(ctx context.Context) (int, error) {
 	return count, nil
 }
 
+func (r *NotificationRepo) GetDeliveredCount(ctx context.Context) (int, error) {
+	query := `SELECT COUNT(*) FROM notifications WHERE status = 'delivered'`
+
+	var count int
+	err := r.db.Pool.QueryRow(ctx, query).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("getting delivered count: %w", err)
+	}
+	return count, nil
+}
+
 func (r *NotificationRepo) GetRecentDeliveries(ctx context.Context, limit int) ([]entities.NotificationDelivery, error) {
 	query := `
 		SELECT id, notification_id, channel, status, external_id,

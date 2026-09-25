@@ -163,3 +163,136 @@ func (r *EmailMessageRepo) scanManyWithJoins(ctx context.Context, query string, 
 	}
 	return messages, rows.Err()
 }
+
+func (r *EmailMessageRepo) GetAll(ctx context.Context, filter repositories.EmailListFilter) ([]entities.EmailMessage, int, error) {
+	where := "WHERE 1=1"
+	args := []interface{}{}
+	argIdx := 1
+
+	if filter.ProviderID != nil {
+		where += fmt.Sprintf(" AND em.provider_id = $%d", argIdx)
+		args = append(args, *filter.ProviderID)
+		argIdx++
+	}
+	if filter.AccountID != nil {
+		where += fmt.Sprintf(" AND em.account_id = $%d", argIdx)
+		args = append(args, *filter.AccountID)
+		argIdx++
+	}
+	if filter.Search != "" {
+		where += fmt.Sprintf(" AND (em.subject ILIKE $%d OR em.sender_from ILIKE $%d)", argIdx, argIdx)
+		args = append(args, "%"+filter.Search+"%")
+		argIdx++
+	}
+
+	// Count total.
+	countQuery := "SELECT COUNT(*) FROM email_messages em " + where
+	var total int
+	if err := r.db.Pool.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("counting emails: %w", err)
+	}
+
+	// Fetch page.
+	dataQuery := fmt.Sprintf(`
+		SELECT em.id, em.account_id, em.gmail_message_id, em.thread_id, em.provider_id,
+		       em.sender_from, em.subject, em.snippet, em.received_at, em.is_unread,
+		       em.processing_status, em.detected_at, em.created_at,
+		       ga.email AS account_email, p.name AS provider_name
+		FROM email_messages em
+		JOIN gmail_accounts ga ON ga.id = em.account_id
+		JOIN providers p ON p.id = em.provider_id
+		%s
+		ORDER BY em.received_at DESC
+		LIMIT $%d OFFSET $%d`, where, argIdx, argIdx+1)
+
+	args = append(args, filter.Limit, filter.Offset)
+
+	messages, err := r.scanManyWithJoins(ctx, dataQuery, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return messages, total, nil
+}
+
+func (r *EmailMessageRepo) CountByDay(ctx context.Context, days int) ([]repositories.DailyCount, error) {
+	query := `
+		SELECT DATE(received_at) AS day, COUNT(*) AS cnt
+		FROM email_messages
+		WHERE received_at >= NOW() - ($1 || ' days')::INTERVAL
+		GROUP BY day
+		ORDER BY day`
+
+	rows, err := r.db.Pool.Query(ctx, query, days)
+	if err != nil {
+		return nil, fmt.Errorf("counting by day: %w", err)
+	}
+	defer rows.Close()
+
+	var results []repositories.DailyCount
+	for rows.Next() {
+		var dc repositories.DailyCount
+		if err := rows.Scan(&dc.Date, &dc.Count); err != nil {
+			return nil, fmt.Errorf("scanning daily count: %w", err)
+		}
+		results = append(results, dc)
+	}
+	return results, rows.Err()
+}
+
+func (r *EmailMessageRepo) CountByProviderGrouped(ctx context.Context) ([]repositories.ProviderCount, error) {
+	query := `
+		SELECT em.provider_id, p.name, COUNT(*) AS cnt
+		FROM email_messages em
+		JOIN providers p ON p.id = em.provider_id
+		GROUP BY em.provider_id, p.name
+		ORDER BY cnt DESC`
+
+	rows, err := r.db.Pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("counting by provider: %w", err)
+	}
+	defer rows.Close()
+
+	var results []repositories.ProviderCount
+	for rows.Next() {
+		var pc repositories.ProviderCount
+		if err := rows.Scan(&pc.ProviderID, &pc.ProviderName, &pc.Count); err != nil {
+			return nil, fmt.Errorf("scanning provider count: %w", err)
+		}
+		results = append(results, pc)
+	}
+	return results, rows.Err()
+}
+
+func (r *EmailMessageRepo) CountByHour(ctx context.Context, days int) ([]repositories.HourCount, error) {
+	query := `
+		SELECT EXTRACT(HOUR FROM received_at)::int AS hr, COUNT(*) AS cnt
+		FROM email_messages
+		WHERE received_at >= NOW() - ($1 || ' days')::INTERVAL
+		GROUP BY hr
+		ORDER BY hr`
+
+	rows, err := r.db.Pool.Query(ctx, query, days)
+	if err != nil {
+		return nil, fmt.Errorf("counting by hour: %w", err)
+	}
+	defer rows.Close()
+
+	var results []repositories.HourCount
+	for rows.Next() {
+		var hc repositories.HourCount
+		if err := rows.Scan(&hc.Hour, &hc.Count); err != nil {
+			return nil, fmt.Errorf("scanning hour count: %w", err)
+		}
+		results = append(results, hc)
+	}
+	return results, rows.Err()
+}
+
+func (r *EmailMessageRepo) CountTotal(ctx context.Context) (int, error) {
+	var count int
+	err := r.db.Pool.QueryRow(ctx, "SELECT COUNT(*) FROM email_messages").Scan(&count)
+	return count, err
+}
+

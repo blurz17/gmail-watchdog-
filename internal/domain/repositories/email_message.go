@@ -24,6 +24,34 @@ type AccountCount struct {
 	LatestAt     *time.Time
 }
 
+// EmailListFilter specifies filtering for the email browser.
+type EmailListFilter struct {
+	ProviderID *uuid.UUID
+	AccountID  *uuid.UUID
+	Search     string
+	Offset     int
+	Limit      int
+}
+
+// DailyCount holds the count for a single day.
+type DailyCount struct {
+	Date  time.Time
+	Count int
+}
+
+// ProviderCount holds the count for a single provider.
+type ProviderCount struct {
+	ProviderID   uuid.UUID
+	ProviderName string
+	Count        int
+}
+
+// HourCount holds the count for a single hour of the day.
+type HourCount struct {
+	Hour  int
+	Count int
+}
+
 // EmailMessageRepository defines the persistence interface for email messages.
 type EmailMessageRepository interface {
 	// Exists checks whether a message with the given account, Gmail message ID, and provider
@@ -44,4 +72,19 @@ type EmailMessageRepository interface {
 
 	// CountByProvider counts messages for a provider, grouped by account, with filtering.
 	CountByProvider(ctx context.Context, providerID uuid.UUID, filter CountFilter) ([]AccountCount, error)
+
+	// GetAll retrieves email messages with filtering and pagination.
+	GetAll(ctx context.Context, filter EmailListFilter) ([]entities.EmailMessage, int, error)
+
+	// CountByDay returns email counts grouped by day for the last N days.
+	CountByDay(ctx context.Context, days int) ([]DailyCount, error)
+
+	// CountByProviderGrouped returns total email counts grouped by provider.
+	CountByProviderGrouped(ctx context.Context) ([]ProviderCount, error)
+
+	// CountByHour returns email counts grouped by hour of day.
+	CountByHour(ctx context.Context, days int) ([]HourCount, error)
+
+	// CountTotal returns total email count.
+	CountTotal(ctx context.Context) (int, error)
 }

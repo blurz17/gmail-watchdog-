@@ -29,6 +29,9 @@ type NotificationRepository interface {
 	// GetPendingCount returns the number of notifications in pending or failed state.
 	GetPendingCount(ctx context.Context) (int, error)
 
+	// GetDeliveredCount returns the number of delivered notifications.
+	GetDeliveredCount(ctx context.Context) (int, error)
+
 	// GetRecentDeliveries retrieves the most recent notification deliveries.
 	GetRecentDeliveries(ctx context.Context, limit int) ([]entities.NotificationDelivery, error)
 }

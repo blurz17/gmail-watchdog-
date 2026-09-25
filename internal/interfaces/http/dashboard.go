@@ -48,18 +48,19 @@ func NewDashboard(
 
 // RegisterRoutes registers dashboard routes on the given mux.
 func (d *Dashboard) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /dashboard", d.authMiddleware(d.handleDashboard))
-	mux.HandleFunc("POST /dashboard/providers", d.authMiddleware(d.handleAddProvider))
-	mux.HandleFunc("POST /dashboard/providers/delete", d.authMiddleware(d.handleDeleteProvider))
-	mux.HandleFunc("POST /dashboard/rules", d.authMiddleware(d.handleAddRule))
-	mux.HandleFunc("POST /dashboard/rules/delete", d.authMiddleware(d.handleDeleteRule))
-	mux.HandleFunc("GET /dashboard/oauth/start", d.authMiddleware(d.handleOAuthStart))
+	mux.HandleFunc("GET /dashboard", d.AuthMiddleware(d.handleDashboard))
+	mux.HandleFunc("POST /dashboard/providers", d.AuthMiddleware(d.handleAddProvider))
+	mux.HandleFunc("POST /dashboard/providers/delete", d.AuthMiddleware(d.handleDeleteProvider))
+	mux.HandleFunc("POST /dashboard/rules", d.AuthMiddleware(d.handleAddRule))
+	mux.HandleFunc("POST /dashboard/rules/delete", d.AuthMiddleware(d.handleDeleteRule))
+	mux.HandleFunc("GET /dashboard/oauth/start", d.AuthMiddleware(d.handleOAuthStart))
 	mux.HandleFunc("GET /dashboard/oauth/callback", d.handleOAuthCallback)
-	mux.HandleFunc("POST /dashboard/accounts/delete", d.authMiddleware(d.handleDeleteAccount))
+	mux.HandleFunc("POST /dashboard/accounts/delete", d.AuthMiddleware(d.handleDeleteAccount))
 }
 
-// authMiddleware checks for API key via query param or cookie.
-func (d *Dashboard) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
+// AuthMiddleware checks for API key via query param or cookie.
+// Exported so other handlers (Pages) can reuse the same auth.
+func (d *Dashboard) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		key := r.URL.Query().Get("key")
 		if key != "" && key == d.apiKey {
