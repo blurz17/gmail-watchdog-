@@ -399,6 +399,7 @@ const emailBrowserPageHTML = `
 
 const docsPageHTML = `
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
 .docs-content { line-height: 1.6; font-size: 0.95rem; color: #cbd5e1; }
 .docs-content h2 { font-size: 1.25rem; color: #f8fafc; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem; }
 .docs-content h3 { font-size: 1.1rem; color: #e2e8f0; margin: 1.25rem 0 0.5rem; }
@@ -410,33 +411,48 @@ const docsPageHTML = `
 .docs-content pre code { background: transparent; padding: 0; border: none; color: #e2e8f0; }
 .note-box { background: #1e3a8a30; border-left: 4px solid #3b82f6; padding: 1rem; margin: 1.5rem 0; border-radius: 0 0.5rem 0.5rem 0; }
 .note-box strong { color: #60a5fa; }
+.lang-toggle { display: flex; gap: 0.5rem; margin-bottom: 1rem; justify-content: flex-end; }
+.lang-btn { padding: 0.4rem 0.8rem; background: #1e293b; border: 1px solid #334155; color: #94a3b8; border-radius: 0.4rem; cursor: pointer; font-size: 0.85rem; font-weight:600; }
+.lang-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+.ar-text { direction: rtl; text-align: right; font-family: 'Cairo', sans-serif; display: none; }
+.ar-text ol, .ar-text ul { margin: 0.5rem 1.5rem 1rem 0; }
 </style>
 
-<div class="page-header">
-  <h1>📚 Documentation</h1>
-  <p>System overview and setup instructions</p>
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="en-text">📚 Documentation</h1>
+    <h1 class="ar-text">📚 التوثيق والتعليمات</h1>
+    <p class="en-text">System overview and detailed setup instructions</p>
+    <p class="ar-text">نظرة عامة على النظام وتعليمات الإعداد المفصلة</p>
+  </div>
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('en')">English</button>
+    <button class="lang-btn" onclick="setLang('ar')" style="font-family:'Cairo',sans-serif;">العربية</button>
+  </div>
 </div>
 
 <div class="card">
   <div class="card-body docs-content">
-    <h2>1. What is Gmail Watchdog?</h2>
-    <p>Gmail Watchdog is a self-hosted monitoring tool designed to instantly alert you via Telegram when specific emails arrive in your Gmail inbox.</p>
     
-    <div class="note-box">
-      <strong>The Problem:</strong> When signing up for various web services, we often use alias emails or filters to keep our primary inbox clean. However, this means missing critical notifications (like password resets, server alerts, or billing failures).
-      <br><br>
-      <strong>The Solution:</strong> Gmail Watchdog connects securely via OAuth, watches for specific senders (like <code>noreply@github.com</code> or <code>@stripe.com</code>), and forwards those alerts directly to your Telegram, bypassing your noisy inbox.
-    </div>
+    <!-- ENGLISH CONTENT -->
+    <div class="en-text">
+      <h2>1. What is Gmail Watchdog?</h2>
+      <p>Gmail Watchdog is a self-hosted monitoring tool designed to instantly alert you via Telegram when specific emails arrive in your Gmail inbox. It uses the official Gmail API to read metadata without compromising your password.</p>
+      
+      <div class="note-box">
+        <strong>The Problem:</strong> When signing up for various web services, we often use alias emails or filters to keep our primary inbox clean. However, this means missing critical notifications (like password resets, server alerts, or billing failures).
+        <br><br>
+        <strong>The Solution:</strong> Gmail Watchdog connects securely via OAuth, watches for specific senders (like <code>noreply@github.com</code> or <code>@stripe.com</code>), and forwards those alerts directly to your Telegram, bypassing your noisy inbox.
+      </div>
 
-    <h2>2. Configuration (.env)</h2>
-    <p>The system requires a <code>.env</code> file at the root of the project to operate. Here are the required variables:</p>
-    <pre><code># Web Server & Dashboard
+      <h2>2. Configuration (.env)</h2>
+      <p>The system requires a <code>.env</code> file at the root of the project to operate. Here are the required variables:</p>
+      <pre><code># Web Server & Dashboard
 HTTP_PORT=8090
 HTTP_API_KEY=your_secure_password_for_dashboard
 
-# PostgreSQL Database
-# Format: postgres://user:password@host:port/dbname?sslmode=disable
-DB_DSN=postgres://postgres:postgres@localhost:5432/gmail_monitor?sslmode=disable
+# PostgreSQL Database (SSL mode disable is usually required for local dev)
+DB_DSN=postgres://user:password@host:5432/dbname?sslmode=disable
 
 # Google Cloud OAuth Credentials
 GMAIL_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
@@ -444,40 +460,127 @@ GMAIL_CLIENT_SECRET=your-google-client-secret
 
 # Telegram Bot Setup
 TELEGRAM_BOT_TOKEN=123456789:YOUR_TELEGRAM_BOT_TOKEN
-TELEGRAM_CHAT_ID=your_telegram_user_or_group_id</code></pre>
+TELEGRAM_CHAT_ID=123456789</code></pre>
 
-    <h2>3. Setting up Google Cloud (OAuth)</h2>
-    <p>To allow the system to read your Gmail, you must create an OAuth application in Google Cloud:</p>
-    <ol>
-      <li>Go to the <a href="https://console.cloud.google.com/" target="_blank" class="email-link">Google Cloud Console</a>.</li>
-      <li>Create a new project.</li>
-      <li>Navigate to <strong>APIs & Services &gt; Library</strong> and enable the <strong>Gmail API</strong>.</li>
-      <li>Navigate to <strong>OAuth consent screen</strong>. Choose "External" (or "Internal" if you have Google Workspace). Fill in the required app details.</li>
-      <li>Add the scope: <code>https://www.googleapis.com/auth/gmail.readonly</code>.</li>
-      <li>Add your own Gmail address as a <strong>Test User</strong> (if the app is in testing mode).</li>
-      <li>Navigate to <strong>Credentials &gt; Create Credentials &gt; OAuth client ID</strong>.</li>
-      <li>Application type: <strong>Web application</strong>.</li>
-      <li>Authorized redirect URIs: Add your dashboard URL followed by <code>/dashboard/oauth/callback</code> (e.g., <code>https://your-heroku-app.herokuapp.com/dashboard/oauth/callback</code>).</li>
-      <li>Copy the generated <strong>Client ID</strong> and <strong>Client Secret</strong> into your <code>.env</code> file.</li>
-    </ol>
+      <h2>3. Setting up Google Cloud (OAuth API)</h2>
+      <p>To allow the system to read your Gmail, you must create an OAuth application in Google Cloud. Follow these exact steps:</p>
+      <ol>
+        <li>Go to the <a href="https://console.cloud.google.com/" target="_blank" class="email-link">Google Cloud Console</a> and sign in.</li>
+        <li>Click the dropdown at the top left and select <strong>New Project</strong>. Name it "Gmail Watchdog" and click Create.</li>
+        <li>In the search bar, type "Gmail API", click on it, and hit <strong>Enable</strong>.</li>
+        <li>Go to the left menu: <strong>APIs & Services &gt; OAuth consent screen</strong>.</li>
+        <li>Select <strong>External</strong> user type and click Create.</li>
+        <li>Fill in the mandatory fields (App name: "Watchdog", User support email, and Developer contact email). Click Save and Continue.</li>
+        <li>On the <strong>Scopes</strong> page, click "Add or Remove Scopes". Search for and add: <code>https://www.googleapis.com/auth/gmail.readonly</code>. Save and Continue.</li>
+        <li>On the <strong>Test Users</strong> page, click "Add Users" and type in your exact Gmail address. If you skip this, OAuth will fail! Save and Continue.</li>
+        <li>Now go to <strong>Credentials</strong> (left menu) &gt; <strong>Create Credentials</strong> &gt; <strong>OAuth client ID</strong>.</li>
+        <li>Application type: <strong>Web application</strong>.</li>
+        <li>Under <strong>Authorized redirect URIs</strong>, click "Add URI". If running locally, enter <code>http://localhost:8090/dashboard/oauth/callback</code>. If deployed (like Heroku), enter your full URL, e.g., <code>https://your-app.herokuapp.com/dashboard/oauth/callback</code>.</li>
+        <li>Click Create. Copy the <strong>Client ID</strong> and <strong>Client Secret</strong> into your <code>.env</code> file.</li>
+      </ol>
 
-    <h2>4. Setting up Telegram</h2>
-    <p>The system sends alerts via a Telegram bot.</p>
-    <ol>
-      <li>Open Telegram and search for <strong>@BotFather</strong>.</li>
-      <li>Send <code>/newbot</code> and follow the prompts to create your bot.</li>
-      <li>Copy the provided HTTP API Token into <code>TELEGRAM_BOT_TOKEN</code>.</li>
-      <li>Send a message to your new bot.</li>
-      <li>Find your Chat ID by visiting <code>https://api.telegram.org/bot&lt;YOUR_TOKEN&gt;/getUpdates</code> in your browser. Look for <code>"chat": {"id": 123456789}</code>.</li>
-      <li>Put that number into <code>TELEGRAM_CHAT_ID</code>.</li>
-    </ol>
+      <h2>4. Setting up Telegram Bot</h2>
+      <p>The system needs a bot to send you the alerts.</p>
+      <ol>
+        <li>Open Telegram and search for <strong>@BotFather</strong> (the official verified bot).</li>
+        <li>Send the message <code>/newbot</code> and follow the prompts to give your bot a name and a username.</li>
+        <li>BotFather will reply with an <strong>HTTP API Token</strong>. Copy this exactly into <code>TELEGRAM_BOT_TOKEN</code>.</li>
+        <li><strong>CRITICAL:</strong> You must start a conversation with your new bot. Search for your bot's username in Telegram and click <strong>Start</strong>.</li>
+        <li>To get your Chat ID, search for <strong>@userinfobot</strong> or <strong>@getmyid_bot</strong> in Telegram and click Start. It will reply with your ID (a string of numbers like <code>123456789</code>).</li>
+        <li>Put that number into <code>TELEGRAM_CHAT_ID</code>.</li>
+      </ol>
 
-    <h2>5. Setting up PostgreSQL</h2>
-    <p>The system requires a Postgres database to store rules, logs, and account tokens.</p>
-    <ul>
-      <li><strong>Local Development:</strong> You can run Postgres locally via Docker: <br><code>docker run --name watchdog-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres</code></li>
-      <li><strong>Production (Heroku):</strong> We recommend using the Heroku Postgres add-on or a free tier provider like <a href="https://neon.tech" target="_blank" class="email-link">Neon.tech</a>.</li>
-    </ul>
-    <p>When the application starts, it will automatically run migrations to create the required tables.</p>
+      <h2>5. Setting up PostgreSQL</h2>
+      <p>The system requires a Postgres database to store rules, logs, and account tokens.</p>
+      <ul>
+        <li><strong>Local Development:</strong> You can run Postgres locally via Docker: <br><code>docker run --name watchdog-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres</code><br>Your DSN will be: <code>postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable</code></li>
+        <li><strong>Production (Heroku):</strong> Go to the Resources tab in your Heroku dashboard, search for "Heroku Postgres", and attach the free/basic tier. Heroku will automatically inject a <code>DATABASE_URL</code> environment variable, which the app will use automatically if <code>DB_DSN</code> is not set.</li>
+      </ul>
+    </div>
+
+    <!-- ARABIC CONTENT -->
+    <div class="ar-text">
+      <h2>١. ما هو Gmail Watchdog؟</h2>
+      <p>أداة مراقبة ذاتية الاستضافة مصممة لتنبيهك فوراً عبر تيليجرام عند وصول رسائل بريد إلكتروني محددة إلى صندوق بريد جي ميل الخاص بك. يستخدم النظام واجهة برمجة تطبيقات جي ميل الرسمية لقراءة البيانات الوصفية دون المساس بكلمة مرورك.</p>
+      
+      <div class="note-box" style="border-left:none; border-right:4px solid #3b82f6; border-radius:0.5rem 0 0 0.5rem;">
+        <strong>المشكلة:</strong> عند التسجيل في خدمات الويب المختلفة، غالباً ما نستخدم أسماء مستعارة أو فلاتر للحفاظ على نظافة صندوق البريد الرئيسي. لكن هذا يعني تفويت الإشعارات الحرجة (مثل إعادة تعيين كلمة المرور، تنبيهات الخوادم، أو فشل الدفع).
+        <br><br>
+        <strong>الحل:</strong> يتصل النظام بشكل آمن عبر OAuth، ويراقب مرسلين محددين (مثل <code>noreply@github.com</code>)، ثم يقوم بتوجيه هذه التنبيهات مباشرة إلى حسابك في تيليجرام، متجاوزاً صندوق البريد المزدحم.
+      </div>
+
+      <h2>٢. الإعدادات (ملف .env)</h2>
+      <p>يتطلب النظام ملف <code>.env</code> في المجلد الرئيسي للمشروع. هذه هي المتغيرات المطلوبة:</p>
+      <pre style="direction:ltr; text-align:left;"><code># خادم الويب ولوحة التحكم
+HTTP_PORT=8090
+HTTP_API_KEY=كلمة_مرور_قوية_للدخول_للوحة_التحكم
+
+# قاعدة بيانات PostgreSQL
+DB_DSN=postgres://user:password@host:5432/dbname?sslmode=disable
+
+# بيانات اعتماد Google Cloud OAuth
+GMAIL_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GMAIL_CLIENT_SECRET=your-google-client-secret
+
+# إعدادات بوت تيليجرام
+TELEGRAM_BOT_TOKEN=123456789:YOUR_TELEGRAM_BOT_TOKEN
+TELEGRAM_CHAT_ID=123456789</code></pre>
+
+      <h2>٣. إعداد Google Cloud (OAuth)</h2>
+      <p>للسماح للنظام بقراءة بريدك، يجب إنشاء تطبيق OAuth في Google Cloud. اتبع هذه الخطوات بدقة:</p>
+      <ol>
+        <li>اذهب إلى <a href="https://console.cloud.google.com/" target="_blank" class="email-link">منصة Google Cloud</a> وقم بتسجيل الدخول.</li>
+        <li>انقر على القائمة المنسدلة في الأعلى واختر <strong>New Project</strong>. سمه "Gmail Watchdog" واضغط Create.</li>
+        <li>في شريط البحث، اكتب "Gmail API"، انقر عليها، ثم اضغط <strong>Enable</strong> لتفعيلها.</li>
+        <li>من القائمة الجانبية، اذهب إلى <strong>APIs & Services &gt; OAuth consent screen</strong>.</li>
+        <li>اختر نوع المستخدم <strong>External</strong> واضغط Create.</li>
+        <li>املأ الحقول الإجبارية (اسم التطبيق، والبريد الإلكتروني للدعم). اضغط Save and Continue.</li>
+        <li>في صفحة <strong>Scopes</strong>، انقر على "Add or Remove Scopes". ابحث عن <code>https://www.googleapis.com/auth/gmail.readonly</code> وأضفه.</li>
+        <li>في صفحة <strong>Test Users</strong>، اضغط "Add Users" واكتب بريدك الإلكتروني (جي ميل) <strong>بدقة</strong>. إذا تخطيت هذه الخطوة سيفشل تسجيل الدخول!</li>
+        <li>الآن اذهب إلى <strong>Credentials</strong> (القائمة الجانبية) &gt; <strong>Create Credentials</strong> &gt; <strong>OAuth client ID</strong>.</li>
+        <li>نوع التطبيق (Application type): <strong>Web application</strong>.</li>
+        <li>تحت <strong>Authorized redirect URIs</strong>، أضف الرابط التالي. إذا كنت تعمل محلياً: <code>http://localhost:8090/dashboard/oauth/callback</code>. إذا كان المشروع مرفوعاً (مثل Heroku)، ضع الرابط الكامل مثل <code>https://your-app.herokuapp.com/dashboard/oauth/callback</code>.</li>
+        <li>اضغط Create. انسخ <strong>Client ID</strong> و <strong>Client Secret</strong> إلى ملف <code>.env</code>.</li>
+      </ol>
+
+      <h2>٤. إعداد بوت تيليجرام</h2>
+      <p>يحتاج النظام إلى بوت لإرسال التنبيهات إليك.</p>
+      <ol>
+        <li>افتح تطبيق تيليجرام وابحث عن <strong>@BotFather</strong> (البوت الرسمي الموثق).</li>
+        <li>أرسل رسالة <code>/newbot</code> واتبع التعليمات لاختيار اسم واسم مستخدم للبوت.</li>
+        <li>سيرد عليك BotFather بـ <strong>HTTP API Token</strong>. انسخه بدقة إلى <code>TELEGRAM_BOT_TOKEN</code>.</li>
+        <li><strong>هام جداً:</strong> يجب أن تبدأ محادثة مع البوت الخاص بك. ابحث عن اسم مستخدم البوت في تيليجرام واضغط <strong>Start</strong>.</li>
+        <li>للحصول على معرف المحادثة (Chat ID) الخاص بك، ابحث عن <strong>@userinfobot</strong> في تيليجرام واضغط Start. سيرد عليك برقمك (مثل <code>123456789</code>).</li>
+        <li>ضع هذا الرقم في <code>TELEGRAM_CHAT_ID</code>.</li>
+      </ol>
+
+      <h2>٥. إعداد PostgreSQL</h2>
+      <p>يحتاج النظام إلى قاعدة بيانات لتخزين القواعد والسجلات ورموز الوصول.</p>
+      <ul>
+        <li><strong>محلياً للتشغيل والتطوير:</strong> يمكنك تشغيل Postgres عبر Docker باستخدام الأمر:<br><code style="direction:ltr;display:inline-block;">docker run --name watchdog-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres</code><br>سيكون الرابط: <code style="direction:ltr;display:inline-block;">postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable</code></li>
+        <li><strong>في الإنتاج (Heroku):</strong> اذهب إلى قسم Resources، ابحث عن "Heroku Postgres" وأضف الباقة المجانية/الأساسية. سيقوم Heroku تلقائياً بإضافة متغير <code>DATABASE_URL</code> والذي سيستخدمه النظام تلقائياً.</li>
+      </ul>
+    </div>
   </div>
-</div>`
+</div>
+
+<script>
+function setLang(lang) {
+  const enEls = document.querySelectorAll('.en-text');
+  const arEls = document.querySelectorAll('.ar-text');
+  const btns = document.querySelectorAll('.lang-btn');
+  
+  btns.forEach(b => b.classList.remove('active'));
+  
+  if(lang === 'ar') {
+    enEls.forEach(el => el.style.display = 'none');
+    arEls.forEach(el => el.style.display = 'block');
+    btns[1].classList.add('active');
+  } else {
+    arEls.forEach(el => el.style.display = 'none');
+    enEls.forEach(el => el.style.display = 'block');
+    btns[0].classList.add('active');
+  }
+}
+</script>
+`
