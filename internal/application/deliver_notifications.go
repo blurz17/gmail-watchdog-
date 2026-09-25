@@ -91,6 +91,10 @@ func (uc *DeliverNotificationsUseCase) Execute(ctx context.Context) error {
 		} else {
 			delivered++
 		}
+
+		// Prevent Telegram 429 Too Many Requests by rate limiting our outgoing messages
+		// Telegram allows ~1 message per second to a single chat ID.
+		time.Sleep(1500 * time.Millisecond)
 	}
 
 	if delivered > 0 || failed > 0 {
