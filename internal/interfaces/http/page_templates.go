@@ -442,7 +442,7 @@ const docsPageHTML = `
       <div class="note-box">
         <strong>The Problem:</strong> When signing up for various web services, we often use alias emails or filters to keep our primary inbox clean. However, this means missing critical notifications (like password resets, server alerts, or billing failures).
         <br><br>
-        <strong>The Solution:</strong> Gmail Watchdog connects securely via OAuth, watches for specific senders (like <code>noreply@github.com</code> or <code>@stripe.com</code>), and forwards those alerts directly to your Telegram, bypassing your noisy inbox.
+        <strong>The Solution:</strong> Gmail Watchdog connects securely via OAuth, watches for specific senders (like <code>noreply@github.com</code>), and forwards those alerts directly to your Telegram, bypassing your noisy inbox.
       </div>
 
       <h2>2. Configuration (.env)</h2>
@@ -468,14 +468,13 @@ TELEGRAM_CHAT_ID=123456789</code></pre>
         <li>Go to the <a href="https://console.cloud.google.com/" target="_blank" class="email-link">Google Cloud Console</a> and sign in.</li>
         <li>Click the dropdown at the top left and select <strong>New Project</strong>. Name it "Gmail Watchdog" and click Create.</li>
         <li>In the search bar, type "Gmail API", click on it, and hit <strong>Enable</strong>.</li>
-        <li>Go to the left menu: <strong>APIs & Services &gt; OAuth consent screen</strong>.</li>
-        <li>Select <strong>External</strong> user type and click Create.</li>
-        <li>Fill in the mandatory fields (App name: "Watchdog", User support email, and Developer contact email). Click Save and Continue.</li>
-        <li>On the <strong>Scopes</strong> page, click "Add or Remove Scopes". Search for and add: <code>https://www.googleapis.com/auth/gmail.readonly</code>. Save and Continue.</li>
-        <li>On the <strong>Test Users</strong> page, click "Add Users" and type in your exact Gmail address. If you skip this, OAuth will fail! Save and Continue.</li>
+        <li>Go to the left menu: <strong>APIs & Services &gt; OAuth consent screen</strong>. Select <strong>External</strong> user type and click Create.</li>
+        <li>Fill in the mandatory App Name and Support Email fields, then click <strong>Save and Continue</strong>.</li>
+        <li><strong>Adding Scopes:</strong> You will be taken to the Scopes step (or you may need to navigate to the Data Access / Scopes page manually). Click <strong>Add or Remove Scopes</strong>, search for <code>https://www.googleapis.com/auth/gmail.readonly</code>, select it, and click Update. Click Save and Continue.</li>
+        <li><strong>Adding Test Users:</strong> On the Test Users step, click "Add Users" and type in your exact Gmail address. If you skip this, OAuth will fail! Click Save and Continue.</li>
         <li>Now go to <strong>Credentials</strong> (left menu) &gt; <strong>Create Credentials</strong> &gt; <strong>OAuth client ID</strong>.</li>
         <li>Application type: <strong>Web application</strong>.</li>
-        <li>Under <strong>Authorized redirect URIs</strong>, click "Add URI". If running locally, enter <code>http://localhost:8090/dashboard/oauth/callback</code>. If deployed (like Heroku), enter your full URL, e.g., <code>https://your-app.herokuapp.com/dashboard/oauth/callback</code>.</li>
+        <li>Under <strong>Authorized redirect URIs</strong>, add your deployment URL followed by <code>/dashboard/oauth/callback</code> (e.g., <code>https://your-domain.com/dashboard/oauth/callback</code>). For local testing, use <code>http://localhost:8090/dashboard/oauth/callback</code>.</li>
         <li>Click Create. Copy the <strong>Client ID</strong> and <strong>Client Secret</strong> into your <code>.env</code> file.</li>
       </ol>
 
@@ -494,7 +493,7 @@ TELEGRAM_CHAT_ID=123456789</code></pre>
       <p>The system requires a Postgres database to store rules, logs, and account tokens.</p>
       <ul>
         <li><strong>Local Development:</strong> You can run Postgres locally via Docker: <br><code>docker run --name watchdog-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres</code><br>Your DSN will be: <code>postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable</code></li>
-        <li><strong>Production (Heroku):</strong> Go to the Resources tab in your Heroku dashboard, search for "Heroku Postgres", and attach the free/basic tier. Heroku will automatically inject a <code>DATABASE_URL</code> environment variable, which the app will use automatically if <code>DB_DSN</code> is not set.</li>
+        <li><strong>Production Deployment:</strong> Use any managed PostgreSQL service (like Neon.tech, Railway, AWS, or a VPS). Simply copy the provided connection string into your <code>DB_DSN</code> variable. The system will automatically run migrations and create the necessary tables on startup.</li>
       </ul>
     </div>
 
@@ -532,14 +531,13 @@ TELEGRAM_CHAT_ID=123456789</code></pre>
         <li>اذهب إلى <a href="https://console.cloud.google.com/" target="_blank" class="email-link">منصة Google Cloud</a> وقم بتسجيل الدخول.</li>
         <li>انقر على القائمة المنسدلة في الأعلى واختر <strong>New Project</strong>. سمه "Gmail Watchdog" واضغط Create.</li>
         <li>في شريط البحث، اكتب "Gmail API"، انقر عليها، ثم اضغط <strong>Enable</strong> لتفعيلها.</li>
-        <li>من القائمة الجانبية، اذهب إلى <strong>APIs & Services &gt; OAuth consent screen</strong>.</li>
-        <li>اختر نوع المستخدم <strong>External</strong> واضغط Create.</li>
+        <li>من القائمة الجانبية، اذهب إلى <strong>APIs & Services &gt; OAuth consent screen</strong>. اختر نوع المستخدم <strong>External</strong> واضغط Create.</li>
         <li>املأ الحقول الإجبارية (اسم التطبيق، والبريد الإلكتروني للدعم). اضغط Save and Continue.</li>
-        <li>في صفحة <strong>Scopes</strong>، انقر على "Add or Remove Scopes". ابحث عن <code>https://www.googleapis.com/auth/gmail.readonly</code> وأضفه.</li>
-        <li>في صفحة <strong>Test Users</strong>، اضغط "Add Users" واكتب بريدك الإلكتروني (جي ميل) <strong>بدقة</strong>. إذا تخطيت هذه الخطوة سيفشل تسجيل الدخول!</li>
+        <li><strong>إضافة الصلاحيات (Scopes):</strong> سيتم توجيهك إلى خطوة الصلاحيات (أو ابحث عن صفحة Data Access / Scopes). انقر على "Add or Remove Scopes"، ابحث عن <code>https://www.googleapis.com/auth/gmail.readonly</code> وحدده ثم اضغط Update و Save and Continue.</li>
+        <li><strong>إضافة مستخدمي الاختبار (Test Users):</strong> في هذه الخطوة، اضغط "Add Users" واكتب بريدك الإلكتروني (جي ميل) <strong>بدقة</strong>. إذا تخطيت هذه الخطوة سيفشل تسجيل الدخول! اضغط Save and Continue.</li>
         <li>الآن اذهب إلى <strong>Credentials</strong> (القائمة الجانبية) &gt; <strong>Create Credentials</strong> &gt; <strong>OAuth client ID</strong>.</li>
         <li>نوع التطبيق (Application type): <strong>Web application</strong>.</li>
-        <li>تحت <strong>Authorized redirect URIs</strong>، أضف الرابط التالي. إذا كنت تعمل محلياً: <code>http://localhost:8090/dashboard/oauth/callback</code>. إذا كان المشروع مرفوعاً (مثل Heroku)، ضع الرابط الكامل مثل <code>https://your-app.herokuapp.com/dashboard/oauth/callback</code>.</li>
+        <li>تحت <strong>Authorized redirect URIs</strong>، أضف رابط المنصة الخاص بك متبوعاً بـ <code>/dashboard/oauth/callback</code> (مثال: <code>https://your-domain.com/dashboard/oauth/callback</code>). للاختبار المحلي استخدم <code>http://localhost:8090/dashboard/oauth/callback</code>.</li>
         <li>اضغط Create. انسخ <strong>Client ID</strong> و <strong>Client Secret</strong> إلى ملف <code>.env</code>.</li>
       </ol>
 
@@ -558,7 +556,7 @@ TELEGRAM_CHAT_ID=123456789</code></pre>
       <p>يحتاج النظام إلى قاعدة بيانات لتخزين القواعد والسجلات ورموز الوصول.</p>
       <ul>
         <li><strong>محلياً للتشغيل والتطوير:</strong> يمكنك تشغيل Postgres عبر Docker باستخدام الأمر:<br><code style="direction:ltr;display:inline-block;">docker run --name watchdog-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres</code><br>سيكون الرابط: <code style="direction:ltr;display:inline-block;">postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable</code></li>
-        <li><strong>في الإنتاج (Heroku):</strong> اذهب إلى قسم Resources، ابحث عن "Heroku Postgres" وأضف الباقة المجانية/الأساسية. سيقوم Heroku تلقائياً بإضافة متغير <code>DATABASE_URL</code> والذي سيستخدمه النظام تلقائياً.</li>
+        <li><strong>للنشر في بيئة الإنتاج:</strong> استخدم أي خدمة PostgreSQL سحابية (مثل Neon.tech، Railway، AWS، أو خادم VPS). ما عليك سوى لصق رابط الاتصال (Connection String) كاملاً في متغير <code>DB_DSN</code>. وسيقوم النظام بإنشاء الجداول تلقائياً عند التشغيل.</li>
       </ul>
     </div>
   </div>
