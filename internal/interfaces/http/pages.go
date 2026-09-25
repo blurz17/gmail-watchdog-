@@ -53,6 +53,13 @@ func (p *Pages) RegisterRoutes(mux *http.ServeMux, authFn func(http.HandlerFunc)
 	mux.HandleFunc("GET /dashboard/analytics", authFn(p.handleAnalytics))
 	mux.HandleFunc("GET /dashboard/activity", authFn(p.handleActivity))
 	mux.HandleFunc("GET /dashboard/emails", authFn(p.handleEmails))
+	mux.HandleFunc("GET /dashboard/docs", authFn(p.handleDocs))
+}
+
+// ─── Documentation ────────────────────────────────────────────
+
+func (p *Pages) handleDocs(w http.ResponseWriter, r *http.Request) {
+	renderPage(w, "Documentation", docsPageHTML, nil, p.logger)
 }
 
 // ─── System Health ────────────────────────────────────────────

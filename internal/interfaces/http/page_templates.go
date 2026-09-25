@@ -128,6 +128,7 @@ a.email-link:hover{text-decoration:underline}
     <a href="/dashboard/analytics">📊 Analytics</a>
     <a href="/dashboard/activity">📜 Activity Feed</a>
     <a href="/dashboard/emails">📧 Email Browser</a>
+    <a href="/dashboard/docs">📚 Documentation</a>
   </nav>
 </div>
 <div class="main">
@@ -393,3 +394,90 @@ const emailBrowserPageHTML = `
   {{if .HasNext}}<a href="/dashboard/emails?page={{add .Page 1}}&search={{.Search}}&provider={{.ProviderID}}&account={{.AccountID}}">Next →</a>{{end}}
 </div>
 {{end}}`
+
+// ─── Documentation Page ───────────────────────────────────────
+
+const docsPageHTML = `
+<style>
+.docs-content { line-height: 1.6; font-size: 0.95rem; color: #cbd5e1; }
+.docs-content h2 { font-size: 1.25rem; color: #f8fafc; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem; }
+.docs-content h3 { font-size: 1.1rem; color: #e2e8f0; margin: 1.25rem 0 0.5rem; }
+.docs-content p { margin-bottom: 1rem; }
+.docs-content ul, .docs-content ol { margin: 0.5rem 0 1rem 1.5rem; }
+.docs-content li { margin-bottom: 0.25rem; }
+.docs-content code { background: #0f172a; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.85rem; color: #60a5fa; border: 1px solid #334155; }
+.docs-content pre { background: #0f172a; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; border: 1px solid #334155; margin-bottom: 1rem; }
+.docs-content pre code { background: transparent; padding: 0; border: none; color: #e2e8f0; }
+.note-box { background: #1e3a8a30; border-left: 4px solid #3b82f6; padding: 1rem; margin: 1.5rem 0; border-radius: 0 0.5rem 0.5rem 0; }
+.note-box strong { color: #60a5fa; }
+</style>
+
+<div class="page-header">
+  <h1>📚 Documentation</h1>
+  <p>System overview and setup instructions</p>
+</div>
+
+<div class="card">
+  <div class="card-body docs-content">
+    <h2>1. What is Gmail Watchdog?</h2>
+    <p>Gmail Watchdog is a self-hosted monitoring tool designed to instantly alert you via Telegram when specific emails arrive in your Gmail inbox.</p>
+    
+    <div class="note-box">
+      <strong>The Problem:</strong> When signing up for various web services, we often use alias emails or filters to keep our primary inbox clean. However, this means missing critical notifications (like password resets, server alerts, or billing failures).
+      <br><br>
+      <strong>The Solution:</strong> Gmail Watchdog connects securely via OAuth, watches for specific senders (like <code>noreply@github.com</code> or <code>@stripe.com</code>), and forwards those alerts directly to your Telegram, bypassing your noisy inbox.
+    </div>
+
+    <h2>2. Configuration (.env)</h2>
+    <p>The system requires a <code>.env</code> file at the root of the project to operate. Here are the required variables:</p>
+    <pre><code># Web Server & Dashboard
+HTTP_PORT=8090
+HTTP_API_KEY=your_secure_password_for_dashboard
+
+# PostgreSQL Database
+# Format: postgres://user:password@host:port/dbname?sslmode=disable
+DB_DSN=postgres://postgres:postgres@localhost:5432/gmail_monitor?sslmode=disable
+
+# Google Cloud OAuth Credentials
+GMAIL_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GMAIL_CLIENT_SECRET=your-google-client-secret
+
+# Telegram Bot Setup
+TELEGRAM_BOT_TOKEN=123456789:YOUR_TELEGRAM_BOT_TOKEN
+TELEGRAM_CHAT_ID=your_telegram_user_or_group_id</code></pre>
+
+    <h2>3. Setting up Google Cloud (OAuth)</h2>
+    <p>To allow the system to read your Gmail, you must create an OAuth application in Google Cloud:</p>
+    <ol>
+      <li>Go to the <a href="https://console.cloud.google.com/" target="_blank" class="email-link">Google Cloud Console</a>.</li>
+      <li>Create a new project.</li>
+      <li>Navigate to <strong>APIs & Services &gt; Library</strong> and enable the <strong>Gmail API</strong>.</li>
+      <li>Navigate to <strong>OAuth consent screen</strong>. Choose "External" (or "Internal" if you have Google Workspace). Fill in the required app details.</li>
+      <li>Add the scope: <code>https://www.googleapis.com/auth/gmail.readonly</code>.</li>
+      <li>Add your own Gmail address as a <strong>Test User</strong> (if the app is in testing mode).</li>
+      <li>Navigate to <strong>Credentials &gt; Create Credentials &gt; OAuth client ID</strong>.</li>
+      <li>Application type: <strong>Web application</strong>.</li>
+      <li>Authorized redirect URIs: Add your dashboard URL followed by <code>/dashboard/oauth/callback</code> (e.g., <code>https://your-heroku-app.herokuapp.com/dashboard/oauth/callback</code>).</li>
+      <li>Copy the generated <strong>Client ID</strong> and <strong>Client Secret</strong> into your <code>.env</code> file.</li>
+    </ol>
+
+    <h2>4. Setting up Telegram</h2>
+    <p>The system sends alerts via a Telegram bot.</p>
+    <ol>
+      <li>Open Telegram and search for <strong>@BotFather</strong>.</li>
+      <li>Send <code>/newbot</code> and follow the prompts to create your bot.</li>
+      <li>Copy the provided HTTP API Token into <code>TELEGRAM_BOT_TOKEN</code>.</li>
+      <li>Send a message to your new bot.</li>
+      <li>Find your Chat ID by visiting <code>https://api.telegram.org/bot&lt;YOUR_TOKEN&gt;/getUpdates</code> in your browser. Look for <code>"chat": {"id": 123456789}</code>.</li>
+      <li>Put that number into <code>TELEGRAM_CHAT_ID</code>.</li>
+    </ol>
+
+    <h2>5. Setting up PostgreSQL</h2>
+    <p>The system requires a Postgres database to store rules, logs, and account tokens.</p>
+    <ul>
+      <li><strong>Local Development:</strong> You can run Postgres locally via Docker: <br><code>docker run --name watchdog-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres</code></li>
+      <li><strong>Production (Heroku):</strong> We recommend using the Heroku Postgres add-on or a free tier provider like <a href="https://neon.tech" target="_blank" class="email-link">Neon.tech</a>.</li>
+    </ul>
+    <p>When the application starts, it will automatically run migrations to create the required tables.</p>
+  </div>
+</div>`
