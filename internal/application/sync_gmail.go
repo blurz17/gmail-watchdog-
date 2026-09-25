@@ -25,6 +25,7 @@ type SyncGmailUseCase struct {
 	rules         repositories.SenderRuleRepository
 	messages      repositories.EmailMessageRepository
 	notifications repositories.NotificationRepository
+	events        repositories.SystemEventRepository
 	gmailClient   services.GmailClient
 	matcher       *services.SenderMatcher
 	formatter     *services.NotificationFormatter
@@ -38,6 +39,7 @@ func NewSyncGmailUseCase(
 	rules repositories.SenderRuleRepository,
 	messages repositories.EmailMessageRepository,
 	notifications repositories.NotificationRepository,
+	events repositories.SystemEventRepository,
 	gmailClient services.GmailClient,
 	matcher *services.SenderMatcher,
 	formatter *services.NotificationFormatter,
@@ -49,6 +51,7 @@ func NewSyncGmailUseCase(
 		rules:         rules,
 		messages:      messages,
 		notifications: notifications,
+		events:        events,
 		gmailClient:   gmailClient,
 		matcher:       matcher,
 		formatter:     formatter,
@@ -108,11 +111,23 @@ func (uc *SyncGmailUseCase) Execute(ctx context.Context) error {
 			)
 			syncErrors = append(syncErrors, fmt.Errorf("account %s: %w", account.Email, err))
 
+			// Log to Activity Feed
+			uc.events.Create(ctx, entities.NewSystemEvent(
+				entities.EventTypeSyncError,
+				fmt.Sprintf("Sync failed for %s: %v", account.Email, err),
+				entities.EventSeverityError,
+			))
+
 			// If auth failed, mark the account.
 			if isAuthError(err) {
 				if statusErr := uc.accounts.UpdateStatus(ctx, account.ID, entities.AccountStatusAuthError); statusErr != nil {
 					uc.logger.Error("failed to update account status", "account", account.Email, "error", statusErr)
 				}
+				uc.events.Create(ctx, entities.NewSystemEvent(
+					entities.EventTypeAccountAuthError,
+					fmt.Sprintf("Auth expired or revoked for %s. Please re-authenticate.", account.Email),
+					entities.EventSeverityError,
+				))
 			}
 			continue
 		}

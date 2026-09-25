@@ -74,6 +74,7 @@ func run(logger *slog.Logger) error {
 	senderRuleRepo := postgres.NewSenderRuleRepo(db)
 	emailMessageRepo := postgres.NewEmailMessageRepo(db)
 	notificationRepo := postgres.NewNotificationRepo(db)
+	eventRepo := postgres.NewSystemEventRepo(db)
 
 	// ── Domain Services ────────────────────────────────────────
 	matcher := services.NewSenderMatcher()
@@ -87,7 +88,7 @@ func run(logger *slog.Logger) error {
 	// ── Application Use Cases ──────────────────────────────────
 	syncGmailUC := application.NewSyncGmailUseCase(
 		accountRepo, providerRepo, senderRuleRepo,
-		emailMessageRepo, notificationRepo,
+		emailMessageRepo, notificationRepo, eventRepo,
 		gmailClient, matcher, formatter, logger,
 	)
 
@@ -130,7 +131,6 @@ func run(logger *slog.Logger) error {
 	dashboard.RegisterRoutes(httpServer.Mux())
 
 	// ── Dashboard Pages (Health, Analytics, Activity, Emails) ──
-	eventRepo := postgres.NewSystemEventRepo(db)
 	pages := httpapi.NewPages(
 		db, accountRepo, providerRepo, emailMessageRepo,
 		notificationRepo, eventRepo, senderRuleRepo, logger,
