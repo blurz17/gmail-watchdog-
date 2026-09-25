@@ -112,8 +112,40 @@ a.email-link:hover{text-decoration:underline}
 
 /* Responsive */
 @media(max-width:768px){
-  .sidebar{display:none}
-  .main{margin-left:0}
+  .sidebar{
+    width: 100%;
+    height: 55px;
+    top: auto;
+    bottom: 0;
+    border-right: none;
+    border-top: 1px solid #334155;
+    flex-direction: row;
+    padding: 0;
+  }
+  .sidebar-brand{display:none}
+  .sidebar-nav{
+    display: flex;
+    flex-direction: row;
+    padding: 0;
+    width: 100%;
+    overflow-x: auto;
+    align-items: center;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sidebar-nav::-webkit-scrollbar { display: none; }
+  .sidebar-nav a{
+    white-space: nowrap;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+    padding: 0 1rem;
+    height: 100%;
+    justify-content: center;
+  }
+  .sidebar-nav a.active{
+    border-left: none;
+    border-bottom-color: #3b82f6;
+  }
+  .main{margin-left:0; padding: 1rem; padding-bottom: 70px; min-height: 100vh;}
   .stats{grid-template-columns:repeat(2,1fr)}
   .hour-grid{grid-template-columns:repeat(6,1fr)}
 }
@@ -436,23 +468,29 @@ const docsPageHTML = `
     
     <!-- ENGLISH CONTENT -->
     <div class="en-text">
-      <h2>1. What is Gmail Watchdog?</h2>
+      <h2>1. What is Gmail Watchdog & Features</h2>
       <p>Gmail Watchdog is a self-hosted monitoring tool designed to instantly alert you via Telegram when specific emails arrive in your Gmail inbox. It uses the official Gmail API to read metadata without compromising your password.</p>
       
+      <h3>Features:</h3>
+      <ul>
+        <li><strong>Multi-Account Support:</strong> Monitor an unlimited number of Gmail accounts from a single dashboard.</li>
+        <li><strong>Smart Filtering:</strong> Create custom rules (Exact Email or Entire Domain) to only trigger alerts for specific senders (e.g. <code>noreply@github.com</code> or <code>*@stripe.com</code>).</li>
+        <li><strong>Telegram Integration:</strong> Lightning-fast push notifications directly to your phone. Includes rate-limiting protection to prevent bot bans.</li>
+        <li><strong>Analytics & History:</strong> Browse past captured emails and view system activity logs to troubleshoot setup issues.</li>
+      </ul>
+
       <div class="note-box">
-        <strong>The Problem:</strong> When signing up for various web services, we often use alias emails or filters to keep our primary inbox clean. However, this means missing critical notifications (like password resets, server alerts, or billing failures).
-        <br><br>
-        <strong>The Solution:</strong> Gmail Watchdog connects securely via OAuth, watches for specific senders (like <code>noreply@github.com</code>), and forwards those alerts directly to your Telegram, bypassing your noisy inbox.
+        <strong>How it works:</strong> The system securely authenticates your Gmail accounts via Google OAuth. Every 60 seconds, a background worker checks the Gmail API specifically for <strong>unread</strong> emails that match your configured sender rules. If a match is found, it sends a Telegram alert and marks it as processed in the database.
       </div>
 
       <h2>2. Configuration (.env)</h2>
-      <p>The system requires a <code>.env</code> file at the root of the project to operate. Here are the required variables:</p>
+      <p>The system requires a <code>.env</code> file at the root of the project. Note that the database variable is <code>DATABASE_URL</code> to match most cloud providers.</p>
       <pre><code># Web Server & Dashboard
 HTTP_PORT=8090
 HTTP_API_KEY=your_secure_password_for_dashboard
 
-# PostgreSQL Database (SSL mode disable is usually required for local dev)
-DB_DSN=postgres://user:password@host:5432/dbname?sslmode=disable
+# PostgreSQL Database (e.g., Neon.tech, Heroku, Railway)
+DATABASE_URL=postgresql://user:password@host:5432/dbname?sslmode=disable
 
 # Google Cloud OAuth Credentials
 GMAIL_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
@@ -462,7 +500,7 @@ GMAIL_CLIENT_SECRET=your-google-client-secret
 TELEGRAM_BOT_TOKEN=123456789:YOUR_TELEGRAM_BOT_TOKEN
 TELEGRAM_CHAT_ID=123456789</code></pre>
 
-      <h2>3. Setting up Google Cloud (OAuth API)</h2>
+      <h2>3. Setting up Google Cloud (OAuth API) & Adding Multiple Accounts</h2>
       <p>To allow the system to read your Gmail, you must create an OAuth application in Google Cloud. Follow these exact steps:</p>
       <ol>
         <li>Go to the <a href="https://console.cloud.google.com/" target="_blank" class="email-link">Google Cloud Console</a> and sign in.</li>
@@ -470,8 +508,8 @@ TELEGRAM_CHAT_ID=123456789</code></pre>
         <li>In the search bar, type "Gmail API", click on it, and hit <strong>Enable</strong>.</li>
         <li>Go to the left menu: <strong>APIs & Services &gt; OAuth consent screen</strong>. Select <strong>External</strong> user type and click Create.</li>
         <li>Fill in the mandatory App Name and Support Email fields, then click <strong>Save and Continue</strong>.</li>
-        <li><strong>Adding Scopes:</strong> You will be taken to the Scopes step (or you may need to navigate to the Data Access / Scopes page manually). Click <strong>Add or Remove Scopes</strong>, search for <code>https://www.googleapis.com/auth/gmail.readonly</code>, select it, and click Update. Click Save and Continue.</li>
-        <li><strong>Adding Test Users:</strong> On the Test Users step, click "Add Users" and type in your exact Gmail address. If you skip this, OAuth will fail! Click Save and Continue.</li>
+        <li><strong>Adding Scopes:</strong> Click <strong>Add or Remove Scopes</strong>, search for <code>https://www.googleapis.com/auth/gmail.readonly</code>, select it, and click Update. Click Save and Continue.</li>
+        <li><strong>Adding Test Users (CRITICAL FOR MULTIPLE ACCOUNTS):</strong> Because your app is in "Testing" mode, Google will block ANY Gmail address that is not explicitly whitelisted here. Click <strong>Add Users</strong> and type in <strong>EVERY single Gmail address</strong> you plan to connect to the dashboard. If you want to monitor 3 Gmails, add all 3 here! Click Save and Continue.</li>
         <li>Now go to <strong>Credentials</strong> (left menu) &gt; <strong>Create Credentials</strong> &gt; <strong>OAuth client ID</strong>.</li>
         <li>Application type: <strong>Web application</strong>.</li>
         <li>Under <strong>Authorized redirect URIs</strong>, add your deployment URL followed by <code>/dashboard/oauth/callback</code> (e.g., <code>https://your-domain.com/dashboard/oauth/callback</code>). For local testing, use <code>http://localhost:8090/dashboard/oauth/callback</code>.</li>
@@ -499,23 +537,29 @@ TELEGRAM_CHAT_ID=123456789</code></pre>
 
     <!-- ARABIC CONTENT -->
     <div class="ar-text">
-      <h2>١. ما هو Gmail Watchdog؟</h2>
+      <h2>١. ما هو Gmail Watchdog وما هي ميزاته؟</h2>
       <p>أداة مراقبة ذاتية الاستضافة مصممة لتنبيهك فوراً عبر تيليجرام عند وصول رسائل بريد إلكتروني محددة إلى صندوق بريد جي ميل الخاص بك. يستخدم النظام واجهة برمجة تطبيقات جي ميل الرسمية لقراءة البيانات الوصفية دون المساس بكلمة مرورك.</p>
       
+      <h3>الميزات:</h3>
+      <ul>
+        <li><strong>دعم حسابات متعددة:</strong> راقب عدداً غير محدود من حسابات جي ميل من لوحة تحكم واحدة.</li>
+        <li><strong>فلاتر ذكية:</strong> قم بإنشاء قواعد مخصصة (بريد محدد أو نطاق كامل) لتلقي تنبيهات من مرسلين محددين فقط (مثل <code>noreply@github.com</code>).</li>
+        <li><strong>تكامل مع تيليجرام:</strong> إشعارات فورية وسريعة جداً إلى هاتفك، مع حماية ذكية ضد الحظر من تيليجرام.</li>
+        <li><strong>التحليلات والسجل:</strong> تصفح الرسائل السابقة وسجل أحداث النظام لتتبع أي مشاكل.</li>
+      </ul>
+
       <div class="note-box" style="border-left:none; border-right:4px solid #3b82f6; border-radius:0.5rem 0 0 0.5rem;">
-        <strong>المشكلة:</strong> عند التسجيل في خدمات الويب المختلفة، غالباً ما نستخدم أسماء مستعارة أو فلاتر للحفاظ على نظافة صندوق البريد الرئيسي. لكن هذا يعني تفويت الإشعارات الحرجة (مثل إعادة تعيين كلمة المرور، تنبيهات الخوادم، أو فشل الدفع).
-        <br><br>
-        <strong>الحل:</strong> يتصل النظام بشكل آمن عبر OAuth، ويراقب مرسلين محددين (مثل <code>noreply@github.com</code>)، ثم يقوم بتوجيه هذه التنبيهات مباشرة إلى حسابك في تيليجرام، متجاوزاً صندوق البريد المزدحم.
+        <strong>كيف يعمل النظام:</strong> يتصل النظام بحساباتك بشكل آمن عبر Google OAuth. كل 60 ثانية، يقوم عامل في الخلفية بالتحقق من جي ميل بحثاً عن الرسائل <strong>غير المقروءة</strong> التي تطابق قواعدك فقط. إذا وجد تطابقاً، يرسل تنبيهاً لتيليجرام ويسجله كـ "مقروء" في قاعدة بيانات النظام لكي لا يرسله مرة أخرى.
       </div>
 
       <h2>٢. الإعدادات (ملف .env)</h2>
-      <p>يتطلب النظام ملف <code>.env</code> في المجلد الرئيسي للمشروع. هذه هي المتغيرات المطلوبة:</p>
+      <p>يتطلب النظام ملف <code>.env</code> في المجلد الرئيسي للمشروع. يرجى ملاحظة أن متغير قاعدة البيانات هو <code>DATABASE_URL</code>:</p>
       <pre style="direction:ltr; text-align:left;"><code># خادم الويب ولوحة التحكم
 HTTP_PORT=8090
 HTTP_API_KEY=كلمة_مرور_قوية_للدخول_للوحة_التحكم
 
 # قاعدة بيانات PostgreSQL
-DB_DSN=postgres://user:password@host:5432/dbname?sslmode=disable
+DATABASE_URL=postgres://user:password@host:5432/dbname?sslmode=disable
 
 # بيانات اعتماد Google Cloud OAuth
 GMAIL_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
@@ -525,7 +569,7 @@ GMAIL_CLIENT_SECRET=your-google-client-secret
 TELEGRAM_BOT_TOKEN=123456789:YOUR_TELEGRAM_BOT_TOKEN
 TELEGRAM_CHAT_ID=123456789</code></pre>
 
-      <h2>٣. إعداد Google Cloud (OAuth)</h2>
+      <h2>٣. إعداد Google Cloud وإضافة حسابات متعددة</h2>
       <p>للسماح للنظام بقراءة بريدك، يجب إنشاء تطبيق OAuth في Google Cloud. اتبع هذه الخطوات بدقة:</p>
       <ol>
         <li>اذهب إلى <a href="https://console.cloud.google.com/" target="_blank" class="email-link">منصة Google Cloud</a> وقم بتسجيل الدخول.</li>
@@ -533,30 +577,30 @@ TELEGRAM_CHAT_ID=123456789</code></pre>
         <li>في شريط البحث، اكتب "Gmail API"، انقر عليها، ثم اضغط <strong>Enable</strong> لتفعيلها.</li>
         <li>من القائمة الجانبية، اذهب إلى <strong>APIs & Services &gt; OAuth consent screen</strong>. اختر نوع المستخدم <strong>External</strong> واضغط Create.</li>
         <li>املأ الحقول الإجبارية (اسم التطبيق، والبريد الإلكتروني للدعم). اضغط Save and Continue.</li>
-        <li><strong>إضافة الصلاحيات (Scopes):</strong> سيتم توجيهك إلى خطوة الصلاحيات (أو ابحث عن صفحة Data Access / Scopes). انقر على "Add or Remove Scopes"، ابحث عن <code>https://www.googleapis.com/auth/gmail.readonly</code> وحدده ثم اضغط Update و Save and Continue.</li>
-        <li><strong>إضافة مستخدمي الاختبار (Test Users):</strong> في هذه الخطوة، اضغط "Add Users" واكتب بريدك الإلكتروني (جي ميل) <strong>بدقة</strong>. إذا تخطيت هذه الخطوة سيفشل تسجيل الدخول! اضغط Save and Continue.</li>
+        <li><strong>إضافة الصلاحيات (Scopes):</strong> انقر على "Add or Remove Scopes"، ابحث عن <code>https://www.googleapis.com/auth/gmail.readonly</code> وحدده ثم اضغط Update و Save and Continue.</li>
+        <li><strong>إضافة مستخدمي الاختبار (هام جداً للحسابات المتعددة):</strong> لأن تطبيقك في وضع "التجريب"، ستقوم جوجل بحظر أي بريد لا تضيفه هنا. اضغط "Add Users" واكتب <strong>كل حسابات جي ميل</strong> التي تنوي ربطها بالمنصة. إذا أردت ربط 3 حسابات، أضف الثلاثة هنا! اضغط Save and Continue.</li>
         <li>الآن اذهب إلى <strong>Credentials</strong> (القائمة الجانبية) &gt; <strong>Create Credentials</strong> &gt; <strong>OAuth client ID</strong>.</li>
         <li>نوع التطبيق (Application type): <strong>Web application</strong>.</li>
-        <li>تحت <strong>Authorized redirect URIs</strong>، أضف رابط المنصة الخاص بك متبوعاً بـ <code>/dashboard/oauth/callback</code> (مثال: <code>https://your-domain.com/dashboard/oauth/callback</code>). للاختبار المحلي استخدم <code>http://localhost:8090/dashboard/oauth/callback</code>.</li>
+        <li>تحت <strong>Authorized redirect URIs</strong>، أضف رابط المنصة الخاص بك متبوعاً بـ <code>/dashboard/oauth/callback</code>. للاختبار المحلي استخدم <code>http://localhost:8090/dashboard/oauth/callback</code>.</li>
         <li>اضغط Create. انسخ <strong>Client ID</strong> و <strong>Client Secret</strong> إلى ملف <code>.env</code>.</li>
       </ol>
 
       <h2>٤. إعداد بوت تيليجرام</h2>
       <p>يحتاج النظام إلى بوت لإرسال التنبيهات إليك.</p>
       <ol>
-        <li>افتح تطبيق تيليجرام وابحث عن <strong>@BotFather</strong> (البوت الرسمي الموثق).</li>
+        <li>افتح تطبيق تيليجرام وابحث عن <strong>@BotFather</strong>.</li>
         <li>أرسل رسالة <code>/newbot</code> واتبع التعليمات لاختيار اسم واسم مستخدم للبوت.</li>
         <li>سيرد عليك BotFather بـ <strong>HTTP API Token</strong>. انسخه بدقة إلى <code>TELEGRAM_BOT_TOKEN</code>.</li>
-        <li><strong>هام جداً:</strong> يجب أن تبدأ محادثة مع البوت الخاص بك. ابحث عن اسم مستخدم البوت في تيليجرام واضغط <strong>Start</strong>.</li>
-        <li>للحصول على معرف المحادثة (Chat ID) الخاص بك، ابحث عن <strong>@userinfobot</strong> في تيليجرام واضغط Start. سيرد عليك برقمك (مثل <code>123456789</code>).</li>
+        <li><strong>هام جداً:</strong> يجب أن تبدأ محادثة مع البوت الخاص بك بالضغط على <strong>Start</strong>.</li>
+        <li>للحصول على معرف المحادثة (Chat ID) الخاص بك، ابحث عن <strong>@userinfobot</strong> واضغط Start. سيرد عليك برقمك.</li>
         <li>ضع هذا الرقم في <code>TELEGRAM_CHAT_ID</code>.</li>
       </ol>
 
       <h2>٥. إعداد PostgreSQL</h2>
-      <p>يحتاج النظام إلى قاعدة بيانات لتخزين القواعد والسجلات ورموز الوصول.</p>
+      <p>يحتاج النظام إلى قاعدة بيانات لتخزين القواعد والسجلات.</p>
       <ul>
-        <li><strong>محلياً للتشغيل والتطوير:</strong> يمكنك تشغيل Postgres عبر Docker باستخدام الأمر:<br><code style="direction:ltr;display:inline-block;">docker run --name watchdog-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres</code><br>سيكون الرابط: <code style="direction:ltr;display:inline-block;">postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable</code></li>
-        <li><strong>للنشر في بيئة الإنتاج:</strong> استخدم أي خدمة PostgreSQL سحابية (مثل Neon.tech، Railway، AWS، أو خادم VPS). ما عليك سوى لصق رابط الاتصال (Connection String) كاملاً في متغير <code>DB_DSN</code>. وسيقوم النظام بإنشاء الجداول تلقائياً عند التشغيل.</li>
+        <li><strong>محلياً:</strong> يمكنك تشغيل Postgres عبر Docker:<br><code style="direction:ltr;display:inline-block;">docker run --name watchdog-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres</code></li>
+        <li><strong>للنشر في بيئة الإنتاج:</strong> استخدم أي خدمة PostgreSQL سحابية (مثل Neon.tech، Heroku). ما عليك سوى لصق رابط الاتصال في متغير <code>DATABASE_URL</code>.</li>
       </ul>
     </div>
   </div>
